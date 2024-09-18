@@ -2,6 +2,6 @@
 {
     public interface IPdfService
     {
-        Task<byte[]> CreatePdfAsync(string html);
+        Task<byte[]> CreatePdfAsync(string s3Url);
     }
 }

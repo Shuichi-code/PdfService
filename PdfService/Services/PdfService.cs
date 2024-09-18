@@ -6,23 +6,31 @@ namespace PdfService.Services
 {
     public class PdfService : IPdfService
     {
-        public async Task<byte[]> CreatePdfAsync(string html)
+        public async Task<byte[]> CreatePdfAsync(string s3Url)
         {
             using var playwright = await Playwright.CreateAsync();
-            var browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
+            IBrowser browser = await playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
             {
                 Headless = true
             });
 
-            var page = await browser.NewPageAsync();
-            await page.GotoAsync(html);
+            IPage page = await browser.NewPageAsync();
+            await page.GotoAsync(s3Url);
 
-            var pdfBytes = await page.PdfAsync(new PagePdfOptions
+            // Inject CSS to force exact color rendering
+            await page.AddStyleTagAsync(new PageAddStyleTagOptions
             {
-                Format = "A4"
+                Content = "body { -webkit-print-color-adjust: exact; }"
+            });
+
+            byte[] pdfBytes = await page.PdfAsync(new PagePdfOptions
+            {
+                Format = "A4",
+                Path = "page.pdf"
             });
 
             await page.CloseAsync();
+            await browser.CloseAsync();
             return pdfBytes;
         }
     }
